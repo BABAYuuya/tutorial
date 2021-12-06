@@ -40,7 +40,7 @@ type LineData = {
 
 export const Game = () => {
 
-    const [boardState, setBoardstate] = useState<BoardState>({
+    const initBoardState:BoardState={
         squares: [[null, null, null, null, null, null, null, null],
         [null, null, null, null, null, null, null, null],
         [null, null, null, null, null, null, null, null],
@@ -51,13 +51,21 @@ export const Game = () => {
         [null, null, null, null, null, null, null, null]],
         stepNumber: 0,
         xIsNext: true
-    })
+    }
+    const [boardState, setBoardstate] = useState<BoardState>(initBoardState);
     const [gameState, setGameState] = useState<GameState>({
         white: 2,
         black: 2
     })
     const currentBoard = boardState;
     const winner = false
+
+    //初期化
+    const initBoard = () =>{
+        setBoardstate(initBoardState);
+    };
+
+    //セルが押された際の処理
     const handleClick = (i: number, j: number) => {
         const directionList = checkCanPut(boardState, i, j);
         const stoneList: LineData[][] = []
@@ -116,6 +124,7 @@ export const Game = () => {
             <div className='game-info'>
                 <div>{`手番数:${boardState.stepNumber}`}</div>
                 <div>{`X:${gameState.black} O:${gameState.white}`}</div>
+                <button onClick={()=>initBoard()}>{"ボードリセット"}</button>
             </div>
         </div>
     );
