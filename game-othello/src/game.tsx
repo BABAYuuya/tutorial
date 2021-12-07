@@ -109,9 +109,6 @@ export const Game = () => {
 
         if (boardState.winner || boardState.squares[i][j] || returnStoneList.length === 0) {
             return {
-                squares: boardState.squares[i][j],
-                xIsNext: boardState.xIsNext,
-                stepNumber: boardState.stepNumber
             };
         };
         //盤面に石の配置、反転等を反映する。
