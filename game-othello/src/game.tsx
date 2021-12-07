@@ -92,7 +92,7 @@ export const Game = () => {
         if (directionList.length !== 0) {
             for (const key of directionList) {
                 //TODO:要リファクタリング
-                const list: LineData[] = chechLine(boardState, i, j, key);
+                const list: LineData[] = checkLine(boardState, i, j, key);
                 if (list.length !== 0) {
                     stoneList.push(list);
                 };
@@ -253,7 +253,7 @@ const checkCanPut = (currentBoard: BoardState, i: number, j: number) => {
 
 //指定した場所が置ける場所かどうか
 //引数：ボードの盤面、石を置く位置、方向
-const chechLine = (currentBoard: BoardState, i: number, j: number, direction: DirectionKey) => {
+const checkLine = (currentBoard: BoardState, i: number, j: number, direction: DirectionKey) => {
     let directionX = i + DIRECTION[direction].x;
     let directionY = j + DIRECTION[direction].y;
     const line: LineData[] = [];
