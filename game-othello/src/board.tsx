@@ -3,12 +3,13 @@ import {Square,SquareState } from "./square";
 import {Repeat} from'typescript-tuple'
 import "./game.css"
 
+//8*8盤面の型
 type BoardState = Repeat<SquareState,8>;
 export type RowBoardState = Repeat<BoardState,8>;
 type BordProps = {
     squares: RowBoardState,
     onClick:(i:number ,j:number) => void;
-}
+};
 
 export const Board = (props:BordProps) =>{
     const renderSquare =(i:number,j:number)=>(
@@ -100,6 +101,4 @@ export const Board = (props:BordProps) =>{
 
         </div>
     );
-}
-
-//まず、盤面を作る。
+};
