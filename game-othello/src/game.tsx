@@ -8,6 +8,8 @@ type BoardState = {
     squares: RowBoardState
     xIsNext: boolean
     stepNumber: number
+    pass:boolean
+    winner:boolean
 }
 
 type GameState = {
@@ -40,7 +42,7 @@ type LineData = {
 
 export const Game = () => {
 
-    const initBoardState:BoardState={
+    const initBoardState: BoardState = {
         squares: [[null, null, null, null, null, null, null, null],
         [null, null, null, null, null, null, null, null],
         [null, null, null, null, null, null, null, null],
@@ -49,8 +51,10 @@ export const Game = () => {
         [null, null, null, null, null, null, null, null],
         [null, null, null, null, null, null, null, null],
         [null, null, null, null, null, null, null, null]],
-        stepNumber: 0,
-        xIsNext: true
+        stepNumber: 1,
+        xIsNext: true,
+        pass:false,
+        winner:false
     }
     const [boardState, setBoardstate] = useState<BoardState>(initBoardState);
     const [gameState, setGameState] = useState<GameState>({
@@ -58,12 +62,24 @@ export const Game = () => {
         black: 2
     })
     const currentBoard = boardState;
-    const winner = false
-
     //初期化
-    const initBoard = () =>{
+    const initBoard = () => {
         setBoardstate(initBoardState);
     };
+    //手番パス
+    const passAcion = () => {
+        let changeWinner =boardState.winner;
+        if(boardState.pass){
+            changeWinner = true;
+        }
+        setBoardstate({
+        squares:boardState.squares,
+        xIsNext:!boardState.xIsNext,
+        stepNumber:boardState.stepNumber+1,
+        pass: true,
+        winner:changeWinner
+    });
+    }
 
     //セルが押された際の処理
     const handleClick = (i: number, j: number) => {
@@ -86,7 +102,7 @@ export const Game = () => {
             }
         }
 
-        if (winner || currentBoard.squares[i][j] || returnStoneList.length === 0) {
+        if (currentBoard.winner || currentBoard.squares[i][j] || returnStoneList.length === 0) {
             return {
                 squares: currentBoard.squares[i][j],
                 xIsNext: currentBoard.xIsNext,
@@ -105,7 +121,9 @@ export const Game = () => {
             return {
                 squares: nextSquares,
                 xIsNext: !xIsNext,
-                stepNumber: stepNumber + 1
+                stepNumber: stepNumber + 1,
+                pass: false,
+                winner:false
             }
         })(currentBoard);
 
@@ -124,7 +142,8 @@ export const Game = () => {
             <div className='game-info'>
                 <div>{`手番数:${boardState.stepNumber}`}</div>
                 <div>{`X:${gameState.black} O:${gameState.white}`}</div>
-                <button onClick={()=>initBoard()}>{"ボードリセット"}</button>
+                <button onClick={() => initBoard()}>{"ボードリセット"}</button>
+                <button onClick={()=>passAcion()}>{"PASS"}</button>
             </div>
         </div>
     );
