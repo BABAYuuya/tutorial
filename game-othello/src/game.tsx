@@ -8,13 +8,18 @@ type BoardState = {
     squares: RowBoardState
     xIsNext: boolean
     stepNumber: number
-    pass:boolean
-    winner:boolean
+    pass: boolean
+    winner: boolean
 }
 
 type GameState = {
     white: number
     black: number
+}
+type Finish = {
+    winner: boolean
+    black: number
+    white: number
 }
 
 const BOARD_RANGE = [0, 1, 2, 3, 4, 5, 6, 7] as const;
@@ -53,8 +58,8 @@ export const Game = () => {
         [null, null, null, null, null, null, null, null]],
         stepNumber: 1,
         xIsNext: true,
-        pass:false,
-        winner:false
+        pass: false,
+        winner: false
     }
     const [boardState, setBoardstate] = useState<BoardState>(initBoardState);
     const [gameState, setGameState] = useState<GameState>({
@@ -68,17 +73,17 @@ export const Game = () => {
     };
     //手番パス
     const passAcion = () => {
-        let changeWinner =boardState.winner;
-        if(boardState.pass){
+        let changeWinner = boardState.winner;
+        if (boardState.pass) {
             changeWinner = true;
         }
         setBoardstate({
-        squares:boardState.squares,
-        xIsNext:!boardState.xIsNext,
-        stepNumber:boardState.stepNumber+1,
-        pass: true,
-        winner:changeWinner
-    });
+            squares: boardState.squares,
+            xIsNext: !boardState.xIsNext,
+            stepNumber: boardState.stepNumber + 1,
+            pass: true,
+            winner: changeWinner
+        });
     }
 
     //セルが押された際の処理
@@ -123,12 +128,16 @@ export const Game = () => {
                 xIsNext: !xIsNext,
                 stepNumber: stepNumber + 1,
                 pass: false,
-                winner:false
+                winner: false
             }
         })(currentBoard);
 
+        const stoneValue:GameState =calculaterBoard(next.squares);
+        if((stoneValue.black+stoneValue.white)===64){
+            next.winner=true;
+        }
         setBoardstate(next)
-        setGameState(calculaterBoard(next.squares))
+        setGameState(stoneValue);
     }
     //メインの画面出力。
     return (
@@ -143,12 +152,34 @@ export const Game = () => {
                 <div>{`手番数:${boardState.stepNumber}`}</div>
                 <div>{`X:${gameState.black} O:${gameState.white}`}</div>
                 <button onClick={() => initBoard()}>{"ボードリセット"}</button>
-                <button onClick={()=>passAcion()}>{"PASS"}</button>
+                <button onClick={() => passAcion()}>{"PASS"}</button>
+                <FinishGame
+                    winner={boardState.winner}
+                    black={gameState.black}
+                    white={gameState.white}
+                />
             </div>
         </div>
     );
 };
 
+const FinishGame = (props: Finish) => {
+    if (props.winner) {
+        let result: string = "";
+        if (props.black === props.white) {
+            result = "引き分け";
+        } else if (props.black > props.white) {
+            result = 'X';
+        } else {
+            result = 'O'
+        }
+        return (
+            <div>{`ゲームは終了しました。結果は${result}です！`}</div>
+        );
+    } else {
+        return null;
+    }
+}
 
 const calculaterBoard = (squares: RowBoardState) => {
     let value: GameState = {
