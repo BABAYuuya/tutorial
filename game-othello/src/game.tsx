@@ -13,7 +13,7 @@ type ExitConditions = {
     black: number
     white: number
 }
-const BOARD_RANGE = [0, 1, 2, 3, 4, 5, 6, 7] as const;
+const BOARD_RANGE = 8 as const;
 //方向の設定。DIRECTIONKEYを元にDIRECTIONを読み出す。
 const DIRECTION = {
     upleft: { x: -1, y: -1 },
@@ -57,8 +57,8 @@ export const Game = () => {
         white: 2,
         black: 2
     });
-    const [stepNumber, setStepNumber] = useState<number>(1);
-    const [xIsNext, setXIsNext] = useState<boolean>(true);
+    const [stepNumberState, setStepNumber] = useState<number>(1);
+    const [turnPlayerState, setturnPlayerState] = useState<SquareState>('X');
     const [passState, setPassState] = useState<boolean>(false);
     const [winnerState, setWinnerState] = useState<boolean>(false);
 
@@ -68,7 +68,7 @@ export const Game = () => {
         setGameState(initGameState);
         setWinnerState(false);
         setPassState(false);
-        setXIsNext(true);
+        setturnPlayerState('X');
     };
     //手番パス処理
     const passAcion = () => {
@@ -77,13 +77,13 @@ export const Game = () => {
         };
 
         setBoardstate(boardState);
-        setStepNumber(stepNumber + 1);
+        setStepNumber(stepNumberState + 1);
         setPassState(true);
-        setXIsNext(!xIsNext);
+        setturnPlayerState(returnStone(turnPlayerState));
     };
     //セルが押された際の処理
     const handleClick = (i: number, j: number) => {
-        const directionList = checkCanPut(boardState, i, j, xIsNext);
+        const directionList = checkCanPut(boardState, i, j, turnPlayerState);
         const stoneList: LineData[][] = [];
 
         if (directionList.length !== 0) {
@@ -98,7 +98,7 @@ export const Game = () => {
 
         const returnStoneList: LineData[][] = [];
         for (let i = 0; i < stoneList.length; i++) {
-            const returnStone = checkReturnLine(boardState, stoneList[i], xIsNext);
+            const returnStone = checkReturnLine(boardState, stoneList[i], turnPlayerState);
             if (returnStone.length !== 0) {
                 returnStoneList.push(returnStone);
             };
@@ -110,10 +110,10 @@ export const Game = () => {
         //盤面に石の配置、反転等を反映する。
         const next: RowBoardState = (( squares:RowBoardState ) => {
             const nextSquares = squares.slice() as RowBoardState;
-            nextSquares[i][j] = xIsNext ? 'X' : 'O';
+            nextSquares[i][j] = turnPlayerState;
             for (let i = 0; i < returnStoneList.length; i++) {
                 for (let j = 0; j < returnStoneList[i].length; j++) {
-                    nextSquares[returnStoneList[i][j].x][returnStoneList[i][j].y] = xIsNext ? 'X' : 'O';
+                    nextSquares[returnStoneList[i][j].x][returnStoneList[i][j].y] = turnPlayerState;
                 };
             };
             return nextSquares;
@@ -124,8 +124,8 @@ export const Game = () => {
         if ((stoneValue.black + stoneValue.white) === 64) {
             setWinnerState(true);
         };
-        setStepNumber(stepNumber + 1);
-        setXIsNext(!xIsNext);
+        setStepNumber(stepNumberState + 1);
+        setturnPlayerState(returnStone(turnPlayerState));
         setBoardstate(next);
         setGameState(stoneValue);
     };
@@ -138,7 +138,8 @@ export const Game = () => {
                 />
             </div>
             <div className='game-info'>
-                <div>{`手番数:${stepNumber}`}</div>
+                <div>{`ターンプレイヤー:${turnPlayerState}`}</div>
+                <div>{`経過ターン:${stepNumberState}`}</div>
                 <div>{`X:${gameState.black} O:${gameState.white}`}</div>
                 <button onClick={() => initBoard()}>{"ボードリセット"}</button>
                 <button onClick={() => passAcion()}>{"PASS"}</button>
@@ -178,8 +179,8 @@ const calculaterBoard = (squares: RowBoardState) => {
         black: 0,
     };
 
-    for (let i = 0; i < BOARD_RANGE.length; i++) {
-        for (let j = 0; j < BOARD_RANGE.length; j++) {
+    for (let i = 0; i < BOARD_RANGE; i++) {
+        for (let j = 0; j < BOARD_RANGE; j++) {
             if (squares[i][j] === 'O') {
                 value.white++;
             } else if (squares[i][j] === 'X') {
@@ -191,9 +192,8 @@ const calculaterBoard = (squares: RowBoardState) => {
 };
 
 //周囲全方向１マスを調べ、反対属性の石が置かれたDIRECTIONKEYを返す。
-const checkCanPut = (currentBoard: RowBoardState, i: number, j: number, xIsNext: boolean) => {
+const checkCanPut = (currentBoard: RowBoardState, i: number, j: number, turnPlayerState: SquareState) => {
     //渡ってきた石の属性取得
-    const putStone = xIsNext ? 'X' : 'O';
     let directionList: DirectionKey[] = [];
     let searchDirection: DirectionKey[] = DIRECTION_KEY;
     let boardEdge: string = "";
@@ -231,9 +231,9 @@ const checkCanPut = (currentBoard: RowBoardState, i: number, j: number, xIsNext:
 
     searchDirection = DIRECTION_KEY.filter((n) => { return !remove.includes(n); });
     for (const key of searchDirection) {
-        if ((currentBoard[i + (DIRECTION[key].x)][j + (DIRECTION[key].y)]) === 'O' && putStone === 'X') {
+        if ((currentBoard[i + (DIRECTION[key].x)][j + (DIRECTION[key].y)]) === 'O' && turnPlayerState === 'X') {
             directionList.push(key);
-        } else if (currentBoard[i + (DIRECTION[key].x)][j + (DIRECTION[key].y)] === 'X' && putStone === 'O') {
+        } else if (currentBoard[i + (DIRECTION[key].x)][j + (DIRECTION[key].y)] === 'X' && turnPlayerState === 'O') {
             directionList.push(key);
         }
     }
@@ -267,13 +267,21 @@ const checkLine = (currentBoard: RowBoardState, i: number, j: number, direction:
 };
 
 //石を反転できるかを調べる処理。
-const checkReturnLine = (currentBoard: RowBoardState, stoneLine: LineData[], xIsNext: boolean) => {
+const checkReturnLine = (currentBoard: RowBoardState, stoneLine: LineData[], turnPlayerState: SquareState) => {
     for (let i = 0; i < stoneLine.length; i++) {
         let stoneList: SquareState = currentBoard[stoneLine[i].x][stoneLine[i].y];
-        let putStone: SquareState = (xIsNext ? 'X' : 'O');
-        if (stoneList === putStone) {
+        if (stoneList === turnPlayerState) {
             return stoneLine.slice(0, i);
         }
     }
     return stoneLine = [];
 };
+
+//入力された石の反対属性を返す処理
+const returnStone = (stone:SquareState) =>{
+    if(stone==='X'){
+        return 'O';
+    }else{
+        return'X';
+    }
+}
