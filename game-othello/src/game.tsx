@@ -28,12 +28,12 @@ const DIRECTION = {
 
 type Direction = typeof DIRECTION;
 type DirectionKey = keyof Direction;
-const DIRECTIONKEY: DirectionKey[] = ['upleft', 'up', 'upright', 'left', 'right', 'downleft', 'down', 'downright']
+const DIRECTION_KEY: DirectionKey[] = (Object.keys(DIRECTION)) as DirectionKey[];
 
 type LineData = {
     x: number,
     y: number
-}
+};
 
 export const Game = () => {
     //初期盤面のstate
@@ -69,7 +69,6 @@ export const Game = () => {
         setWinnerState(false);
         setPassState(false);
         setXIsNext(true);
-
     };
     //手番パス処理
     const passAcion = () => {
@@ -117,7 +116,7 @@ export const Game = () => {
                     nextSquares[returnStoneList[i][j].x][returnStoneList[i][j].y] = xIsNext ? 'X' : 'O';
                 };
             };
-            return (nextSquares);
+            return nextSquares;
         })(boardState);
         //盤面にある石の数を計算する。
         const stoneValue: GameState = calculaterBoard(next);
@@ -196,7 +195,7 @@ const checkCanPut = (currentBoard: RowBoardState, i: number, j: number, xIsNext:
     //渡ってきた石の属性取得
     const putStone = xIsNext ? 'X' : 'O';
     let directionList: DirectionKey[] = [];
-    let searchDirection: DirectionKey[] = DIRECTIONKEY;
+    let searchDirection: DirectionKey[] = DIRECTION_KEY;
     let boardEdge: string = "";
     //Board端判定
     if (i === 0) {
@@ -230,7 +229,7 @@ const checkCanPut = (currentBoard: RowBoardState, i: number, j: number, xIsNext:
             break;
     };
 
-    searchDirection = DIRECTIONKEY.filter((n) => { return !remove.includes(n); });
+    searchDirection = DIRECTION_KEY.filter((n) => { return !remove.includes(n); });
     for (const key of searchDirection) {
         if ((currentBoard[i + (DIRECTION[key].x)][j + (DIRECTION[key].y)]) === 'O' && putStone === 'X') {
             directionList.push(key);
