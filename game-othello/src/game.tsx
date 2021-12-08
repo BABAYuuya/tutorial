@@ -2,14 +2,6 @@ import React, { useState } from "react";
 import { Board, RowBoardState } from "./board";
 import { SquareState } from "./square";
 
-//盤面の情報。
-type BoardState = {
-    squares: RowBoardState
-    xIsNext: boolean
-    stepNumber: number
-    pass: boolean
-    winner: boolean
-}
 //盤面の石の数を管理する型
 type GameState = {
     white: number
@@ -45,53 +37,54 @@ type LineData = {
 
 export const Game = () => {
     //初期盤面のstate
-    const initBoardState: BoardState = {
-        squares: [[null, null, null, null, null, null, null, null],
+    const initBoardState: RowBoardState = (
+        [[null, null, null, null, null, null, null, null],
         [null, null, null, null, null, null, null, null],
         [null, null, null, null, null, null, null, null],
         [null, null, null, 'O', 'X', null, null, null],
         [null, null, null, 'X', 'O', null, null, null],
         [null, null, null, null, null, null, null, null],
         [null, null, null, null, null, null, null, null],
-        [null, null, null, null, null, null, null, null]],
-        stepNumber: 1,
-        xIsNext: true,
-        pass: false,
-        winner: false
-    };
-    const initGameState:GameState ={
-        black:2,
-        white:2
+        [null, null, null, null, null, null, null, null]]
+    );
+    const initGameState: GameState = {
+        black: 2,
+        white: 2
     };
     //盤面情報を管理するhooks
-    const [boardState, setBoardstate] = useState<BoardState>(initBoardState);
+    const [boardState, setBoardstate] = useState<RowBoardState>(initBoardState);
     const [gameState, setGameState] = useState<GameState>({
         white: 2,
         black: 2
     });
+    const [stepNumber, setStepNumber] = useState<number>(1);
+    const [xIsNext, setXIsNext] = useState<boolean>(true);
+    const [passState, setPassState] = useState<boolean>(false);
+    const [winnerState, setWinnerState] = useState<boolean>(false);
+
     //ゲームリセット処理
     const initBoard = () => {
         setBoardstate(initBoardState);
         setGameState(initGameState);
+        setWinnerState(false);
+        setPassState(false);
+        setXIsNext(true);
+
     };
     //手番パス処理
     const passAcion = () => {
-        let changeWinner = boardState.winner;
-        if (boardState.pass) {
-            changeWinner = true;
+        if (passState) {
+            setWinnerState(true);
         };
 
-        setBoardstate({
-            squares: boardState.squares,
-            xIsNext: !boardState.xIsNext,
-            stepNumber: boardState.stepNumber + 1,
-            pass: true,
-            winner: changeWinner
-        });
+        setBoardstate(boardState);
+        setStepNumber(stepNumber + 1);
+        setPassState(true);
+        setXIsNext(!xIsNext);
     };
     //セルが押された際の処理
     const handleClick = (i: number, j: number) => {
-        const directionList = checkCanPut(boardState, i, j);
+        const directionList = checkCanPut(boardState, i, j, xIsNext);
         const stoneList: LineData[][] = [];
 
         if (directionList.length !== 0) {
@@ -106,18 +99,17 @@ export const Game = () => {
 
         const returnStoneList: LineData[][] = [];
         for (let i = 0; i < stoneList.length; i++) {
-            const returnStone = checkReturnLine(boardState, stoneList[i]);
+            const returnStone = checkReturnLine(boardState, stoneList[i], xIsNext);
             if (returnStone.length !== 0) {
                 returnStoneList.push(returnStone);
             };
         };
 
-        if (boardState.winner || boardState.squares[i][j] || returnStoneList.length === 0) {
-            return {
-            };
+        if (winnerState || boardState[i][j] || returnStoneList.length === 0) {
+            return;
         };
         //盤面に石の配置、反転等を反映する。
-        const next: BoardState = (({ squares, xIsNext, stepNumber }) => {
+        const next: RowBoardState = (( squares:RowBoardState ) => {
             const nextSquares = squares.slice() as RowBoardState;
             nextSquares[i][j] = xIsNext ? 'X' : 'O';
             for (let i = 0; i < returnStoneList.length; i++) {
@@ -125,41 +117,34 @@ export const Game = () => {
                     nextSquares[returnStoneList[i][j].x][returnStoneList[i][j].y] = xIsNext ? 'X' : 'O';
                 };
             };
-
-            return {
-                squares: nextSquares,
-                xIsNext: !xIsNext,
-                stepNumber: stepNumber + 1,
-                pass: false,
-                winner: false
-            };
-
+            return (nextSquares);
         })(boardState);
         //盤面にある石の数を計算する。
-        const stoneValue: GameState = calculaterBoard(next.squares);
+        const stoneValue: GameState = calculaterBoard(next);
         //終了条件
         if ((stoneValue.black + stoneValue.white) === 64) {
-            next.winner = true;
+            setWinnerState(true);
         };
-
-        setBoardstate(next)
+        setStepNumber(stepNumber + 1);
+        setXIsNext(!xIsNext);
+        setBoardstate(next);
         setGameState(stoneValue);
     };
     return (
         <div className="game">
             <div className="game-board">
                 <Board
-                    squares={boardState.squares}
+                    squares={boardState}
                     onClick={(i: number, j: number) => handleClick(i, j)}
                 />
             </div>
             <div className='game-info'>
-                <div>{`手番数:${boardState.stepNumber}`}</div>
+                <div>{`手番数:${stepNumber}`}</div>
                 <div>{`X:${gameState.black} O:${gameState.white}`}</div>
                 <button onClick={() => initBoard()}>{"ボードリセット"}</button>
                 <button onClick={() => passAcion()}>{"PASS"}</button>
                 <FinishGame
-                    winner={boardState.winner}
+                    winner={winnerState}
                     black={gameState.black}
                     white={gameState.white}
                 />
@@ -207,9 +192,9 @@ const calculaterBoard = (squares: RowBoardState) => {
 };
 
 //周囲全方向１マスを調べ、反対属性の石が置かれたDIRECTIONKEYを返す。
-const checkCanPut = (currentBoard: BoardState, i: number, j: number) => {
+const checkCanPut = (currentBoard: RowBoardState, i: number, j: number, xIsNext: boolean) => {
     //渡ってきた石の属性取得
-    const putStone = currentBoard.xIsNext ? 'X' : 'O';
+    const putStone = xIsNext ? 'X' : 'O';
     let directionList: DirectionKey[] = [];
     let searchDirection: DirectionKey[] = DIRECTIONKEY;
     let boardEdge: string = "";
@@ -247,9 +232,9 @@ const checkCanPut = (currentBoard: BoardState, i: number, j: number) => {
 
     searchDirection = DIRECTIONKEY.filter((n) => { return !remove.includes(n); });
     for (const key of searchDirection) {
-        if ((currentBoard.squares[i + (DIRECTION[key].x)][j + (DIRECTION[key].y)]) === 'O' && putStone === 'X') {
+        if ((currentBoard[i + (DIRECTION[key].x)][j + (DIRECTION[key].y)]) === 'O' && putStone === 'X') {
             directionList.push(key);
-        } else if (currentBoard.squares[i + (DIRECTION[key].x)][j + (DIRECTION[key].y)] === 'X' && putStone === 'O') {
+        } else if (currentBoard[i + (DIRECTION[key].x)][j + (DIRECTION[key].y)] === 'X' && putStone === 'O') {
             directionList.push(key);
         }
     }
@@ -258,7 +243,7 @@ const checkCanPut = (currentBoard: BoardState, i: number, j: number) => {
 
 //指定した場所が置ける場所かどうか
 //引数：ボードの盤面、石を置く位置、方向
-const checkLine = (currentBoard: BoardState, i: number, j: number, direction: DirectionKey) => {
+const checkLine = (currentBoard: RowBoardState, i: number, j: number, direction: DirectionKey) => {
     let directionX = i + DIRECTION[direction].x;
     let directionY = j + DIRECTION[direction].y;
     const line: LineData[] = [];
@@ -283,10 +268,10 @@ const checkLine = (currentBoard: BoardState, i: number, j: number, direction: Di
 };
 
 //石を反転できるかを調べる処理。
-const checkReturnLine = (currentBoard: BoardState, stoneLine: LineData[]) => {
+const checkReturnLine = (currentBoard: RowBoardState, stoneLine: LineData[], xIsNext: boolean) => {
     for (let i = 0; i < stoneLine.length; i++) {
-        let stoneList: SquareState = currentBoard.squares[stoneLine[i].x][stoneLine[i].y];
-        let putStone: SquareState = (currentBoard.xIsNext ? 'X' : 'O');
+        let stoneList: SquareState = currentBoard[stoneLine[i].x][stoneLine[i].y];
+        let putStone: SquareState = (xIsNext ? 'X' : 'O');
         if (stoneList === putStone) {
             return stoneLine.slice(0, i);
         }
