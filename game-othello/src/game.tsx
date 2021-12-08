@@ -128,6 +128,7 @@ export const Game = () => {
         setturnPlayerState(returnStone(turnPlayerState));
         setBoardstate(next);
         setGameState(stoneValue);
+        setPassState(false);
     };
     return (
         <div className="game">
