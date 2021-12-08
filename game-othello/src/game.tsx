@@ -16,7 +16,7 @@ type GameState = {
     black: number
 }
 //ゲーム終了に必要なデータの型
-type Finish = {
+type ExitConditions = {
     winner: boolean
     black: number
     white: number
@@ -59,6 +59,10 @@ export const Game = () => {
         pass: false,
         winner: false
     };
+    const initGameState:GameState ={
+        black:2,
+        white:2
+    };
     //盤面情報を管理するhooks
     const [boardState, setBoardstate] = useState<BoardState>(initBoardState);
     const [gameState, setGameState] = useState<GameState>({
@@ -68,6 +72,7 @@ export const Game = () => {
     //ゲームリセット処理
     const initBoard = () => {
         setBoardstate(initBoardState);
+        setGameState(initGameState);
     };
     //手番パス処理
     const passAcion = () => {
@@ -164,7 +169,7 @@ export const Game = () => {
 };
 
 //ゲーム終了の画面表示
-const FinishGame = (props: Finish) => {
+const FinishGame = (props: ExitConditions) => {
     if (props.winner) {
         let result: string = "";
         if (props.black === props.white) {
