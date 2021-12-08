@@ -69,6 +69,7 @@ export const Game = () => {
         setWinnerState(false);
         setPassState(false);
         setturnPlayerState('X');
+        setStepNumber(1);
     };
     //手番パス処理
     const passAcion = () => {
@@ -247,22 +248,14 @@ const checkLine = (currentBoard: RowBoardState, i: number, j: number, direction:
     let directionX = i + DIRECTION[direction].x;
     let directionY = j + DIRECTION[direction].y;
     const line: LineData[] = [];
-    let loop: boolean = true;
-    while (loop) {
+    while (true) {
         line.push({ x: directionX, y: directionY });
         directionX += DIRECTION[direction].x;
         directionY += DIRECTION[direction].y;
 
-        if (directionX === -1) {
-            loop = false;
-        } else if (directionX === 8) {
-            loop = false;
-        } else if (directionY === -1) {
-            loop = false;
-        } else if (directionY === 8) {
-            loop = false;
+        if (directionX === -1||directionX===8 || directionY === -1 || directionY === 8) {
+            break;
         }
-
     };
     return line;
 };
